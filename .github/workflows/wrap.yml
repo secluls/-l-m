@@ -1,0 +1,92 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  
+  
+  
+  wrappers:
+            runs-on: ubuntu-latest
+            steps:
+              - name: Checkout
+                uses: actions/checkout@v4
+              - name: Install dependencies
+                uses: ConorMacBride/install-package@v1
+                with:
+                  apt: >
+                    binutils-mips-linux-gnu
+                    ninja-build
+                    bsdmainutils
+                    build-essential
+                    libaudiofile-dev
+                    binutils-djgpp
+                    binutils-mingw-w64
+                    libdigest-sha-perl
+                    mingw-w64-tools
+                    libsdl2-dev
+                    libusb-1.0-0-dev
+                    gcc-mingw-w64
+                    g++-mingw-w64-i686
+                    g++-mingw-w64
+                    g++-10-multilib
+                    gcc-10-multilib
+                    gcc-mingw-w64-x86-64-win32-runtime
+                    gcc-mingw-w64-i686
+                    mingw-w64-x86-64-dev
+                    mingw-w64-i686-dev
+                    mingw-w64-common
+                    libx11-dev
+                    libcapstone-dev
+                    pkgconf
+                    python3
+              - name: Build Wrappers/3dfx
+                run: |
+                  cd wrappers/3dfx
+                  mkdir build && cd build
+                  bash ../../../scripts/conf_wrapper
+                  make
+            
+              - name: Build Wrappers/Mesa
+                run: |
+                  cd wrappers/mesa
+                  mkdir build && cd build
+                  bash ../../../scripts/conf_wrapper
+                  make
+        
+              - name: Build Wrappers/Openglide
+                run: |
+                  git clone https://github.com/kjliew/qemu-xtra.git
+                  cd qemu-xtra
+                  cd openglide
+                  bash ./bootstrap
+                  mkdir build && cd build
+                  ../configure && make
+
+
+              - name: Package
+                run: |
+                 mkdir wrapbin
+                 mkdir wrapbin/3dfx/
+                 mkdir wrapbin/mesa/
+                 mkdir wrapbin/openglide/
+                 ls
+                 cp -r wrappers/3dfx/build/ ./wrapbin/3dfx/
+                 cp -r wrappers/mesa/build/ ./wrapbin/mesa/
+                 cp -r qemu-xtra/openglide/build/ ./wrapbin/openglide/
+                 tar -czvf wrapbin.tar.gz wrapbin
+
+
+                  
+        
+                  
+              - name: Upload Releases 
+                uses: xresloader/upload-to-github-release@v1
+                env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                with:
+                  default_release_name: Qemu-3dfx
+                  file: ${{github.workspace}}/wrapbin.tar.gz
+                  draft: true
