@@ -11,8 +11,10 @@ jobs:
   wrappers:
             runs-on: ubuntu-latest
             steps:
-              - name: Checkout
+              - name: Checkout tools repo
                 uses: actions/checkout@v4
+                with:
+                  repository: kjliew/qemu-3dfx
               - name: Install dependencies
                 uses: ConorMacBride/install-package@v1
                 with:
